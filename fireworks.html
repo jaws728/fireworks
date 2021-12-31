@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>放烟花</title>
+	<style type="text/css">
+	html,body{overflow:hidden;height:100%;}
+	body,div,p{margin:0;padding:0;}
+	body{background:#000;font:12px/1.5 arial;color:#7A7A7A;}
+	a{text-decoration:none;outline:none;}
+	#tips,#copyright{position:absolute;width:100%;height:50px;text-align:center;background:#171717;border:2px solid #484848;}
+	#tips{top:0;border-width:0 0 2px;}
+	#tips a{font:14px/30px arial;color:#FFF;background:#F06;display:inline-block;margin:10px 5px 0;padding:0 15px;border-radius:15px;}
+	#tips a.active{background:#FE0000;}
+	#copyright{bottom:0;line-height:50px;border-width:2px 0 0;}
+	#copyright a{color:#FFF;background:#7A7A7A;padding:2px 5px;border-radius:10px;}
+	#copyright a:hover{background:#F90;}
+	p{position:absolute;top:55px;width:100%;text-align:center;}
+	.fire {
+		width: 3px;
+		height: 30px;
+		background: white;
+		position: absolute;top:100%;
+	} 
+	.spark {
+		position: absolute;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+	}
+	.rule{
+		width: 333px;
+		background: #ffeb00;
+		position:fixed;
+		left: 0;
+		bottom: 0;
+	}
+	.rule h3{margin: 0;padding: 0;color:blue;padding-left:10px;}
+	.rule ol{margin: 0;padding-left: 22px;}
+	.rule ol li{color:purple;}
+</style>
+</head>
+<script src="js/common.js"></script>
+<script>
+	document.addEventListener('DOMContentLoaded',function(){
+		// 页面对象
+		var Page={
+			// 属性
+			btn:'#btnAuto',
+			ele:'body',
+			// 方法
+			init:function(){
+				this.btn=document.querySelector(this.btn);
+				this.ele=document.querySelector(this.ele);
+				// 点击页面放烟花
+				document.onclick=function(e){
+					var point={x:e.clientX,y:e.clientY};
+					new FireWork(point).init().move();
+				}
+				var play=true;
+				// 自动放烟花
+				this.btn.onclick=function(e){
+					var target=e.target;
+					if(play){
+							clearInterval(target.timer);
+						    target.timer=setInterval(()=>{
+							var x=randomNumber(30,window.innerWidth-30);
+							var y=randomNumber(50,window.innerHeight-200);
+							var point={x:x,y:y};
+							new FireWork(point).init().move();
+						},250)
+						play=!play;
+						this.innerHTML='结束放烟花';
+						this.style.background='#f60';
+					}else{
+						clearInterval(target.timer);
+						play=!play;
+						this.innerHTML='自动放烟花';
+						this.style.background='#f06';
+					}
+					e.stopPropagation();
+				}
+			}
+		}
+
+		// 烟花对象
+		// 构造函数写属性
+		function FireWork(point){
+			// 随机颜色
+			this.bgcolor=randomColor();
+			// 飞入的位置&目标位置
+			this.point=point;
+			// 火花数量
+			this.spark=randomNumber(12,24);
+			// 爆炸半径
+			this.r=randomNumber(40,100);
+
+		}
+		// 原型对象写方法
+		FireWork.prototype={
+			// 重置constructor
+			constructor:FireWork,
+			// 初始化方法
+			init:function(){
+				var firework=document.createElement('div');
+				firework.className='fire';
+				firework.style.left=this.point.x+'px';
+				firework.style.background=this.bgcolor;
+
+				Page.ele.appendChild(firework);
+
+				this.ele=firework;
+				return this;
+			},
+			// 移动
+			move:function(){
+				animate(this.ele,{top:this.point.y,height:3},function(){
+					this.remove();
+					this.boom();
+				}.bind(this));
+			},
+			// 移除
+			remove:function(){
+				this.ele.parentNode.removeChild(this.ele);
+			},
+			// 爆炸
+			boom:function(){
+				for(var i=0;i<this.spark;i++){
+					var deg=360/this.spark*i;
+					new Spark(this.point,deg,this.r).init(this.point).move();
+				}
+				
+			}
+		}
+
+		// 火花对象
+		// 属性
+		function Spark(point,deg,r){
+			// 随机颜色
+			this.bgColor=randomColor();
+			// 飞出角度
+			this.rad=deg*Math.PI/180;
+			// 飞出半径
+			this.r=r;
+			// 给初始化传point参数
+			this.point=point;
+			// this.init(point);
+		}
+		// 方法
+		Spark.prototype={
+			// 重置constructor
+			constructor:Spark,
+			// 初始化方法
+			init:function(point){
+				// 生成火花
+				var spark=document.createElement('span');
+				spark.className='spark';
+				// 定位
+				spark.style.left=point.x+'px';
+				spark.style.top=point.y+'px';
+				// 随机颜色
+				spark.style.background=randomColor();
+
+				this.ele=spark;
+				// 写入页面
+				Page.ele.appendChild(spark);
+				return this;
+			},
+			// 移动
+			move:function(){
+				var a=this.r*Math.cos(this.rad);
+				var b=this.r*Math.sin(this.rad);
+				var left=parseInt(this.point.x+a);
+				var top=parseInt(this.point.y+b);
+
+				animate(this.ele,{left:left,top:top,opacity:0.2},()=>{
+					this.remove();
+				});
+				return this;
+			},
+			// 清除
+			remove:function(){
+				this.ele.parentNode.removeChild(this.ele);
+			}
+		}
+		// 对象操作
+		Page.init();
+	})
+</script>
+<body>
+	<div class="rule">
+		<h3>怎样放烟花？</h3>
+		<ol>
+			<li>点击浏览器窗口任何位置会放出一枚烟花，多点多放！</li>
+			<li>点击【自动放烟花】按钮会自动放烟花！</li>
+			<li>点击【结束放烟花】按钮会结束放烟花！</li>
+		</ol>
+	</div>
+	<div id="tips"><a id="btnAuto" href="javascript:;">自动放烟花</a></div>
+</body>
+</html>
